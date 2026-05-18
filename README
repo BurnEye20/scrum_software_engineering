@@ -1,0 +1,25 @@
+## Definition of Done (DoD)
+
+1. "Code is written and contains no compilation/linter errors"
+
+What you do: You agree that no one is allowed to call a task finished if it breaks the build.
+
+Execution: Before moving a task forward, the developer must ensure their local environment builds successfully. For example, if you are building this library system in C++, this means verifying that all dependencies link correctly and that your build files (such as ensuring config.cmake and pico_sdk_init.cmake are properly included) compile the project without throwing any build errors.
+
+2. "Unit and System tests are written and passed successfully"
+
+What you do: You prove the code actually works mathematically and logically, rather than just "it looks right when I click it."
+
+Execution: You write automated tests for your new features. When verifying the book borrowing and returning logic, you should write robust unit and system tests to validate these workflows, applying the same rigorous testing principles you would use when validating state changes in something like a vacation request system. Ensure edge cases (e.g., trying to borrow a book with 0 copies left) are tested and pass.
+
+3. "Code has been reviewed by at least one other team member"
+
+What you do: You implement the "four-eyes principle" to catch bugs and ensure code quality.
+
+Execution: When a developer finishes their part, they do not push it straight to the main branch. Instead, they open a Pull Request (PR) on GitHub. Another team member must look at the code, confirm it makes sense, and click "Approve".
+
+4. "The feature is successfully integrated into the main branch"
+
+What you do: You ensure the feature isn't just sitting in isolation, but is actually part of the main product.
+
+Execution: Once the code is reviewed and approved, the Pull Request is merged into main. Only when the code is safely merged—and the main branch still compiles and runs without issues—can the Scrum Master finally drag the card into the "Done" column on your board.
