@@ -207,7 +207,7 @@ export default function App() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1>📚 Library Management System</h1>
+        <h1> Library Management System</h1>
         <p>Manage your book collection with ease</p>
       </div>
 
