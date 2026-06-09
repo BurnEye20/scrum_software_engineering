@@ -21,9 +21,10 @@ interface BookCardProps {
   onRemovePiece: (bookId: string) => void;
   onAddPiece: (bookId: string) => void;
   onRemoveBook: (bookId: string) => void;
+  viewMode?: 'inventory' | 'browse';
 }
 
-export function BookCard({ book, onBorrow, onReturn, onRemovePiece, onAddPiece, onRemoveBook }: BookCardProps) {
+export function BookCard({ book, onBorrow, onReturn, onRemovePiece, onAddPiece, onRemoveBook, viewMode = 'inventory' }: BookCardProps) {
   const averageRating = book.ratings.length > 0
     ? (book.ratings.reduce((sum, rating) => sum + rating, 0) / book.ratings.length).toFixed(1)
     : 'N/A';
@@ -40,14 +41,16 @@ export function BookCard({ book, onBorrow, onReturn, onRemovePiece, onAddPiece, 
               {book.title}
             </Typography>
           </div>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => onRemoveBook(book.id)}
-            title="Remove book completely"
-          >
-            <Trash2 className="w-4 h-4" />
-          </IconButton>
+          {viewMode === 'inventory' && (
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => onRemoveBook(book.id)}
+              title="Remove book completely"
+            >
+              <Trash2 className="w-4 h-4" />
+            </IconButton>
+          )}
         </div>
 
         <Typography color="text.secondary" gutterBottom>
@@ -83,44 +86,70 @@ export function BookCard({ book, onBorrow, onReturn, onRemovePiece, onAddPiece, 
         </Box>
 
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="contained"
-            size="small"
-            disabled={book.availablePieces === 0}
-            onClick={() => onBorrow(book.id)}
-          >
-            Borrow
-          </Button>
+          {viewMode === 'browse' && (
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={book.availablePieces === 0}
+                onClick={() => onBorrow(book.id)}
+              >
+                Borrow
+              </Button>
 
-          <Button
-            variant="outlined"
-            size="small"
-            disabled={borrowedPieces === 0}
-            onClick={() => onReturn(book.id)}
-          >
-            Return
-          </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={borrowedPieces === 0}
+                onClick={() => onReturn(book.id)}
+              >
+                Return
+              </Button>
+            </>
+          )}
 
-          <div className="flex gap-1">
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => onAddPiece(book.id)}
-              title="Add a piece"
-            >
-              <Plus className="w-4 h-4" />
-            </IconButton>
+          {viewMode === 'inventory' && (
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={book.availablePieces === 0}
+                onClick={() => onBorrow(book.id)}
+              >
+                Borrow
+              </Button>
 
-            <IconButton
-              size="small"
-              color="error"
-              disabled={book.totalPieces <= 1 || (borrowedPieces > 0 && book.totalPieces - 1 < borrowedPieces)}
-              onClick={() => onRemovePiece(book.id)}
-              title={borrowedPieces > 0 && book.totalPieces - 1 < borrowedPieces ? "Return borrowed pieces first" : "Remove a piece"}
-            >
-              <Minus className="w-4 h-4" />
-            </IconButton>
-          </div>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={borrowedPieces === 0}
+                onClick={() => onReturn(book.id)}
+              >
+                Return
+              </Button>
+
+              <div className="flex gap-1">
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => onAddPiece(book.id)}
+                  title="Add a piece"
+                >
+                  <Plus className="w-4 h-4" />
+                </IconButton>
+
+                <IconButton
+                  size="small"
+                  color="error"
+                  disabled={book.totalPieces <= 1 || (borrowedPieces > 0 && book.totalPieces - 1 < borrowedPieces)}
+                  onClick={() => onRemovePiece(book.id)}
+                  title={borrowedPieces > 0 && book.totalPieces - 1 < borrowedPieces ? "Return borrowed pieces first" : "Remove a piece"}
+                >
+                  <Minus className="w-4 h-4" />
+                </IconButton>
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

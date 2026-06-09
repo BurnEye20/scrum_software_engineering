@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Container, Typography, Grid, AppBar, Toolbar, Box } from '@mui/material';
+import { Container, Typography, Grid, AppBar, Toolbar, Box, Button } from '@mui/material';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 import { Library } from 'lucide-react';
@@ -12,6 +12,7 @@ export default function App() {
   const [books, setBooks] = useState<BookData[]>([]);
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookData | null>(null);
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'register' | 'browse'>('dashboard');
 
   const handleAddBook = (bookData: {
     title: string;
@@ -131,52 +132,175 @@ export default function App() {
         </Toolbar>
       </AppBar>
 
+      {/* Navigation Menu Bar */}
+      <Box
+        sx={{
+          backgroundColor: '#f5f5f5',
+          borderBottom: '1px solid #e0e0e0',
+          py: 1,
+          px: 2,
+        }}
+      >
+        <Container maxWidth="lg">
+          <div className="flex gap-2">
+            <Button
+              variant={currentTab === 'dashboard' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('dashboard')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant={currentTab === 'register' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('register')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Manage Inventory
+            </Button>
+            <Button
+              variant={currentTab === 'browse' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('browse')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Borrow Books
+            </Button>
+          </div>
+        </Container>
+      </Box>
+
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <AddBookForm onAddBook={handleAddBook} />
-
-        {books.length > 0 && (
+        {/* Dashboard Tab */}
+        {currentTab === 'dashboard' && (
           <>
-            <Statistics books={books} />
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h5" gutterBottom>
-                Book Collection ({books.length})
-              </Typography>
-            </Box>
-
-            <Grid container spacing={3}>
-              {books.map(book => (
-                <Grid item xs={12} sm={6} md={4} key={book.id}>
-                  <BookCard
-                    book={book}
-                    onBorrow={handleBorrow}
-                    onReturn={handleReturnClick}
-                    onAddPiece={handleAddPiece}
-                    onRemovePiece={handleRemovePiece}
-                    onRemoveBook={handleRemoveBook}
-                  />
-                </Grid>
-              ))}
-            </Grid>
+            {books.length > 0 ? (
+              <Statistics books={books} />
+            ) : (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books registered yet
+                </Typography>
+                <Typography variant="body2">
+                  Start by registering your first book in the Manage Inventory tab
+                </Typography>
+              </Box>
+            )}
           </>
         )}
 
-        {books.length === 0 && (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 8,
-              color: 'text.secondary'
-            }}
-          >
-            <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <Typography variant="h6">
-              No books registered yet
-            </Typography>
-            <Typography variant="body2">
-              Start by registering your first book above
-            </Typography>
-          </Box>
+        {/* Manage Inventory Tab */}
+        {currentTab === 'register' && (
+          <>
+            <AddBookForm onAddBook={handleAddBook} />
+
+            {books.length > 0 && (
+              <>
+                <Statistics books={books} />
+
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h5" gutterBottom>
+                    Book Collection ({books.length})
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {books.map(book => (
+                    <Grid item xs={12} sm={6} md={4} key={book.id}>
+                      <BookCard
+                        book={book}
+                        onBorrow={handleBorrow}
+                        onReturn={handleReturnClick}
+                        onAddPiece={handleAddPiece}
+                        onRemovePiece={handleRemovePiece}
+                        onRemoveBook={handleRemoveBook}
+                        viewMode="inventory"
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {books.length === 0 && (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books registered yet
+                </Typography>
+                <Typography variant="body2">
+                  Start by registering your first book above
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+
+        {/* Borrow Books Tab */}
+        {currentTab === 'browse' && (
+          <>
+            {books.length > 0 ? (
+              <>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h5" gutterBottom>
+                    Book Collection ({books.length})
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {books.map(book => (
+                    <Grid item xs={12} sm={6} md={4} key={book.id}>
+                      <BookCard
+                        book={book}
+                        onBorrow={handleBorrow}
+                        onReturn={handleReturnClick}
+                        onAddPiece={handleAddPiece}
+                        onRemovePiece={handleRemovePiece}
+                        onRemoveBook={handleRemoveBook}
+                        viewMode="browse"
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books available
+                </Typography>
+                <Typography variant="body2">
+                  Check back later or visit the Manage Inventory tab to add books
+                </Typography>
+              </Box>
+            )}
+          </>
         )}
       </Container>
 
