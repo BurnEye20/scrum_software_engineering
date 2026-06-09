@@ -1,314 +1,317 @@
-import { useState, useEffect } from 'react';
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  totalCopies: number;
-  availableCopies: number;
-}
-
-const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '20px',
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f9fafb',
-    minHeight: '100vh',
-  },
-  header: {
-    backgroundColor: '#1f2937',
-    color: '#fff',
-    padding: '20px',
-    marginBottom: '30px',
-    borderRadius: '8px',
-    textAlign: 'center' as const,
-  },
-  section: {
-    backgroundColor: '#fff',
-    padding: '20px',
-    borderRadius: '8px',
-    marginBottom: '30px',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-  },
-  sectionTitle: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    marginBottom: '15px',
-    color: '#1f2937',
-  },
-  form: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '15px',
-    marginBottom: '15px',
-  },
-  input: {
-    padding: '10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-  },
-  button: {
-    padding: '10px 20px',
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s',
-  },
-  buttonDisabled: {
-    backgroundColor: '#d1d5db',
-    cursor: 'not-allowed',
-  },
-  buttonDanger: {
-    backgroundColor: '#ef4444',
-  },
-  buttonSuccess: {
-    backgroundColor: '#10b981',
-  },
-  bookGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '20px',
-  },
-  bookCard: {
-    backgroundColor: '#f3f4f6',
-    padding: '15px',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-  },
-  bookTitle: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: '5px',
-  },
-  bookAuthor: {
-    fontSize: '14px',
-    color: '#6b7280',
-    marginBottom: '10px',
-  },
-  bookInfo: {
-    fontSize: '14px',
-    color: '#4b5563',
-    marginBottom: '10px',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '10px',
-    marginTop: '10px',
-  },
-  emptyState: {
-    textAlign: 'center' as const,
-    padding: '40px',
-    color: '#6b7280',
-  },
-  alert: {
-    padding: '12px',
-    borderRadius: '4px',
-    marginBottom: '15px',
-    fontSize: '14px',
-  },
-  alertError: {
-    backgroundColor: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-  },
-  alertSuccess: {
-    backgroundColor: '#dcfce7',
-    color: '#166534',
-    border: '1px solid #bbf7d0',
-  },
-};
+import { useState } from 'react';
+import { Container, Typography, Grid, AppBar, Toolbar, Box, Button } from '@mui/material';
+import { Toaster } from 'sonner';
+import { toast } from 'sonner';
+import { Library } from 'lucide-react';
+import { AddBookForm } from './components/AddBookForm';
+import { BookCard, BookData } from './components/BookCard';
+import { ReturnDialog } from './components/ReturnDialog';
+import { Statistics } from './components/Statistics';
 
 export default function App() {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [copies, setCopies] = useState('');
-  const [alert, setAlert] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [books, setBooks] = useState<BookData[]>([]);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<BookData | null>(null);
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'register' | 'browse'>('dashboard');
 
-  // Load books from localStorage on component mount
-  useEffect(() => {
-    const storedBooks = localStorage.getItem('libraryBooks');
-    if (storedBooks) {
-      try {
-        setBooks(JSON.parse(storedBooks));
-      } catch (error) {
-        console.error('Failed to load books from localStorage:', error);
-      }
-    }
-  }, []);
-
-  // Sync books to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('libraryBooks', JSON.stringify(books));
-  }, [books]);
-
-  const showAlert = (type: 'error' | 'success', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 3000);
-  };
-
-  const handleAddBook = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Error handling: prevent empty submissions
-    if (!title.trim() || !author.trim() || !copies.trim()) {
-      showAlert('error', 'Please fill in all fields');
-      return;
-    }
-
-    const totalCopies = parseInt(copies, 10);
-    if (isNaN(totalCopies) || totalCopies <= 0) {
-      showAlert('error', 'Number of copies must be a positive number');
-      return;
-    }
-
-    const newBook: Book = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      author: author.trim(),
-      totalCopies,
-      availableCopies: totalCopies,
+  const handleAddBook = (bookData: {
+    title: string;
+    author: string;
+    year: number;
+    edition: string;
+    publisher: string;
+    totalPieces: number;
+  }) => {
+    const newBook: BookData = {
+      id: Date.now().toString(),
+      ...bookData,
+      availablePieces: bookData.totalPieces,
+      borrowCount: 0,
+      ratings: [],
     };
-
     setBooks([...books, newBook]);
-    setTitle('');
-    setAuthor('');
-    setCopies('');
-    showAlert('success', 'Book registered successfully');
   };
 
   const handleBorrow = (bookId: string) => {
-    setBooks(books.map(book =>
-      book.id === bookId && book.availableCopies > 0
-        ? { ...book, availableCopies: book.availableCopies - 1 }
-        : book
-    ));
-    showAlert('success', 'Book borrowed successfully');
+    setBooks(books.map(book => {
+      if (book.id === bookId && book.availablePieces > 0) {
+        return {
+          ...book,
+          availablePieces: book.availablePieces - 1,
+          borrowCount: book.borrowCount + 1,
+        };
+      }
+      return book;
+    }));
+    toast.success('Book borrowed successfully');
   };
 
-  const handleReturn = (bookId: string) => {
-    setBooks(books.map(book =>
-      book.id === bookId && book.availableCopies < book.totalCopies
-        ? { ...book, availableCopies: book.availableCopies + 1 }
-        : book
-    ));
-    showAlert('success', 'Book returned successfully');
+  const handleReturnClick = (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (book) {
+      setSelectedBook(book);
+      setReturnDialogOpen(true);
+    }
+  };
+
+  const handleReturnConfirm = (rating: number) => {
+    if (selectedBook) {
+      setBooks(books.map(book => {
+        if (book.id === selectedBook.id) {
+          const newRatings = rating > 0 ? [...book.ratings, rating] : book.ratings;
+          return {
+            ...book,
+            availablePieces: book.availablePieces + 1,
+            ratings: newRatings,
+          };
+        }
+        return book;
+      }));
+      toast.success(rating > 0 ? 'Book returned and rated' : 'Book returned');
+    }
+  };
+
+  const handleAddPiece = (bookId: string) => {
+    setBooks(books.map(book => {
+      if (book.id === bookId) {
+        return {
+          ...book,
+          totalPieces: book.totalPieces + 1,
+          availablePieces: book.availablePieces + 1,
+        };
+      }
+      return book;
+    }));
+    toast.success('Piece added');
+  };
+
+  const handleRemovePiece = (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+
+    const borrowedPieces = book.totalPieces - book.availablePieces;
+
+    if (borrowedPieces > 0 && book.totalPieces - 1 < borrowedPieces) {
+      toast.error('Cannot remove piece - some pieces are borrowed. Please return them first.');
+      return;
+    }
+
+    setBooks(books.map(b => {
+      if (b.id === bookId && b.totalPieces > 1) {
+        const newTotal = b.totalPieces - 1;
+        const newAvailable = Math.min(b.availablePieces, newTotal);
+        return {
+          ...b,
+          totalPieces: newTotal,
+          availablePieces: newAvailable,
+        };
+      }
+      return b;
+    }));
+    toast.success('Piece removed');
+  };
+
+  const handleRemoveBook = (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (book && book.availablePieces < book.totalPieces) {
+      toast.error('Cannot remove book with borrowed pieces');
+      return;
+    }
+    setBooks(books.filter(b => b.id !== bookId));
+    toast.success('Book removed completely');
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1> Library Management System</h1>
-        <p>Manage your book collection with ease</p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <AppBar position="static" elevation={1}>
+        <Toolbar>
+          <Library className="w-8 h-8 mr-2" />
+          <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+            Library Management System
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
-      {alert && (
-        <div
-          style={{
-            ...styles.alert,
-            ...(alert.type === 'error' ? styles.alertError : styles.alertSuccess),
-          }}
-        >
-          {alert.message}
-        </div>
-      )}
+      {/* Navigation Menu Bar */}
+      <Box
+        sx={{
+          backgroundColor: '#f5f5f5',
+          borderBottom: '1px solid #e0e0e0',
+          py: 1,
+          px: 2,
+        }}
+      >
+        <Container maxWidth="lg">
+          <div className="flex gap-2">
+            <Button
+              variant={currentTab === 'dashboard' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('dashboard')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant={currentTab === 'register' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('register')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Manage Inventory
+            </Button>
+            <Button
+              variant={currentTab === 'browse' ? 'contained' : 'text'}
+              onClick={() => setCurrentTab('browse')}
+              sx={{
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
+            >
+              Borrow Books
+            </Button>
+          </div>
+        </Container>
+      </Box>
 
-      {/* Add Book Form */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Register a New Book</h2>
-        <form onSubmit={handleAddBook}>
-          <div style={styles.form}>
-            <input
-              type="text"
-              placeholder="Book Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={styles.input}
-            />
-            <input
-              type="text"
-              placeholder="Author Name"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              style={styles.input}
-            />
-            <input
-              type="number"
-              placeholder="Number of Copies"
-              value={copies}
-              onChange={(e) => setCopies(e.target.value)}
-              style={styles.input}
-              min="1"
-            />
-            <button type="submit" style={styles.button}>
-              Register Book
-            </button>
-          </div>
-        </form>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Dashboard Tab */}
+        {currentTab === 'dashboard' && (
+          <>
+            {books.length > 0 ? (
+              <Statistics books={books} />
+            ) : (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books registered yet
+                </Typography>
+                <Typography variant="body2">
+                  Start by registering your first book in the Manage Inventory tab
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
 
-      {/* Books Display */}
-      {books.length > 0 ? (
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Book Collection ({books.length})</h2>
-          <div style={styles.bookGrid}>
-            {books.map(book => (
-              <div key={book.id} style={styles.bookCard}>
-                <div style={styles.bookTitle}>{book.title}</div>
-                <div style={styles.bookAuthor}>by {book.author}</div>
-                <div style={styles.bookInfo}>
-                  Total Copies: <strong>{book.totalCopies}</strong>
-                </div>
-                <div style={styles.bookInfo}>
-                  Available: <strong>{book.availableCopies}</strong>
-                </div>
-                <div style={styles.buttonGroup}>
-                  <button
-                    onClick={() => handleBorrow(book.id)}
-                    disabled={book.availableCopies === 0}
-                    style={{
-                      ...styles.button,
-                      ...(book.availableCopies === 0 && styles.buttonDisabled),
-                    }}
-                  >
-                    Borrow
-                  </button>
-                  <button
-                    onClick={() => handleReturn(book.id)}
-                    disabled={book.availableCopies === book.totalCopies}
-                    style={{
-                      ...styles.button,
-                      ...styles.buttonSuccess,
-                      ...(book.availableCopies === book.totalCopies && styles.buttonDisabled),
-                    }}
-                  >
-                    Return
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div style={styles.section}>
-          <div style={styles.emptyState}>
-            <p style={{ fontSize: '24px', marginBottom: '10px' }}>📖</p>
-            <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>
-              No books registered yet
-            </p>
-            <p>Start by registering your first book using the form above</p>
-          </div>
-        </div>
-      )}
+        {/* Manage Inventory Tab */}
+        {currentTab === 'register' && (
+          <>
+            <AddBookForm onAddBook={handleAddBook} />
+
+            {books.length > 0 && (
+              <>
+                <Statistics books={books} />
+
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h5" gutterBottom>
+                    Book Collection ({books.length})
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {books.map(book => (
+                    <Grid item xs={12} sm={6} md={4} key={book.id}>
+                      <BookCard
+                        book={book}
+                        onBorrow={handleBorrow}
+                        onReturn={handleReturnClick}
+                        onAddPiece={handleAddPiece}
+                        onRemovePiece={handleRemovePiece}
+                        onRemoveBook={handleRemoveBook}
+                        viewMode="inventory"
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {books.length === 0 && (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books registered yet
+                </Typography>
+                <Typography variant="body2">
+                  Start by registering your first book above
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+
+        {/* Borrow Books Tab */}
+        {currentTab === 'browse' && (
+          <>
+            {books.length > 0 ? (
+              <>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h5" gutterBottom>
+                    Book Collection ({books.length})
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  {books.map(book => (
+                    <Grid item xs={12} sm={6} md={4} key={book.id}>
+                      <BookCard
+                        book={book}
+                        onBorrow={handleBorrow}
+                        onReturn={handleReturnClick}
+                        onAddPiece={handleAddPiece}
+                        onRemovePiece={handleRemovePiece}
+                        onRemoveBook={handleRemoveBook}
+                        viewMode="browse"
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  color: 'text.secondary'
+                }}
+              >
+                <Library className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Typography variant="h6">
+                  No books available
+                </Typography>
+                <Typography variant="body2">
+                  Check back later or visit the Manage Inventory tab to add books
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+      </Container>
+
+      <ReturnDialog
+        open={returnDialogOpen}
+        book={selectedBook}
+        onClose={() => setReturnDialogOpen(false)}
+        onConfirm={handleReturnConfirm}
+      />
+
+      <Toaster position="top-right" richColors />
     </div>
   );
 }
